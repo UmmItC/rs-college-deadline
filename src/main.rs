@@ -14,7 +14,6 @@ struct Messages {
 
 #[derive(Debug, Deserialize)]
 struct CommandResponses {
-    gay: String,
     about: String,
 }
 
@@ -25,9 +24,27 @@ struct Bot {
 #[async_trait]
 impl EventHandler for Bot {
     async fn message(&self, ctx: Context, msg: Message) {
-        if msg.content == "!about" {
-            if let Err(e) = msg.channel_id.say(&ctx.http, &self.messages.commands.about).await {
-                error!("Error sending message: {:?}", e);
+
+        if msg.author.bot {
+            return;
+        }
+
+        if !msg.content.starts_with('!') {
+            return;
+        }
+
+        match msg.content.as_str() {
+
+            "!about" => {
+                if let Err(e) = msg.channel_id.say(&ctx.http, &self.messages.commands.about).await {
+                    error!("Error sending message: {:?}", e);
+                }
+            }
+            _ => {
+                let error_message = "Sorry, I don't recognize that command. Please try `!about`.";
+                if let Err(e) = msg.channel_id.say(&ctx.http, error_message).await {
+                    error!("Error sending error message: {:?}", e);
+                }
             }
         }
     }
